@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>버그트래커</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #161616;
+    --border: #2a2a2a;
+    --accent: #ff3b3b;
+    --accent2: #ffb800;
+    --accent3: #00e5a0;
+    --text: #f0f0f0;
+    --muted: #666;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 1rem;
+  }
+
+  header h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.8rem;
+    color: var(--accent);
+    letter-spacing: -1px;
+  }
+
+  header span {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.75rem 1.25rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+  }
+
+  .stat .num {
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: block;
+  }
+
+  .stat.bug .num { color: var(--accent); }
+  .stat.improve .num { color: var(--accent2); }
+  .stat.done .num { color: var(--accent3); }
+
+  .add-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  input[type="text"], textarea, select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.6rem 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  input[type="text"] { flex: 1; min-width: 200px; }
+  textarea { width: 100%; resize: vertical; min-height: 80px; }
+
+  select {
+    cursor: pointer;
+  }
+
+  select option { background: var(--surface); }
+
+  .btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { opacity: 0.85; }
+  .btn:active { transform: scale(0.97); }
+
+  .btn.secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .btn.secondary:hover { border-color: var(--text); color: var(--text); }
+
+  .filter-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.4rem 1rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn.active, .filter-btn:hover {
+    color: var(--text);
+    border-color: var(--text);
+  }
+
+  .filter-btn.active { background: var(--surface); }
+
+  .items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid transparent;
+    padding: 1rem 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+    align-items: start;
+    animation: slideIn 0.2s ease;
+    transition: opacity 0.3s;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .item.bug { border-left-color: var(--accent); }
+  .item.improvement { border-left-color: var(--accent2); }
+  .item.done { opacity: 0.5; }
+
+  .item-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+  }
+
+  .item.done .item-title { text-decoration: line-through; color: var(--muted); }
+
+  .item-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .item-meta {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid;
+  }
+
+  .tag.bug { color: var(--accent); border-color: var(--accent); }
+  .tag.improvement { color: var(--accent2); border-color: var(--accent2); }
+  .tag.done { color: var(--accent3); border-color: var(--accent3); }
+
+  .tag.priority-high { color: var(--accent); border-color: var(--accent); }
+  .tag.priority-mid { color: var(--accent2); border-color: var(--accent2); }
+  .tag.priority-low { color: var(--muted); border-color: var(--muted); }
+
+  .date {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+  }
+
+  .item-actions {
+    display: flex;
+    gap: 0.4rem;
+    padding-top: 0.1rem;
+  }
+
+  .icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 1rem;
+    padding: 0.2rem;
+    transition: color 0.15s;
+    line-height: 1;
+  }
+
+  .icon-btn:hover { color: var(--text); }
+  .icon-btn.check:hover { color: var(--accent3); }
+  .icon-btn.del:hover { color: var(--accent); }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    padding: 3rem;
+    border: 1px dashed var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>BUG_TRACKER</h1>
+  <span>// 버그 & 개선사항</span>
+</header>
+
+<div class="stats">
+  <div class="stat bug"><span class="num" id="countBug">0</span>버그</div>
+  <div class="stat improve"><span class="num" id="countImprove">0</span>개선사항</div>
+  <div class="stat done"><span class="num" id="countDone">0</span>완료</div>
+</div>
+
+<div class="add-form">
+  <div class="form-row">
+    <input type="text" id="titleInput" placeholder="제목을 입력하세요..." />
+    <select id="typeSelect">
+      <option value="bug">🔴 버그</option>
+      <option value="improvement">🟡 개선사항</option>
+    </select>
+    <select id="prioritySelect">
+      <option value="high">높음 ↑</option>
+      <option value="mid">보통 →</option>
+      <option value="low">낮음 ↓</option>
+    </select>
+  </div>
+  <textarea id="descInput" placeholder="자세한 내용 (선택사항)..."></textarea>
+  <div class="form-row">
+    <button class="btn" onclick="addItem()">+ 추가</button>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <button class="filter-btn active" onclick="setFilter('all', this)">전체</button>
+  <button class="filter-btn" onclick="setFilter('bug', this)">버그</button>
+  <button class="filter-btn" onclick="setFilter('improvement', this)">개선사항</button>
+  <button class="filter-btn" onclick="setFilter('done', this)">완료</button>
+</div>
+
+<div class="items" id="itemList"></div>
+
+<script>
+  let items = JSON.parse(localStorage.getItem('bt_items') || '[]');
+  let currentFilter = 'all';
+
+  function save() {
+    localStorage.setItem('bt_items', JSON.stringify(items));
+  }
+
+  function addItem() {
+    const title = document.getElementById('titleInput').value.trim();
+    if (!title) { document.getElementById('titleInput').focus(); return; }
+    const item = {
+      id: Date.now(),
+      title,
+      desc: document.getElementById('descInput').value.trim(),
+      type: document.getElementById('typeSelect').value,
+      priority: document.getElementById('prioritySelect').value,
+      done: false,
+      date: new Date().toLocaleDateString('ko-KR', {month:'2-digit', day:'2-digit'})
+    };
+    items.unshift(item);
+    save();
+    document.getElementById('titleInput').value = '';
+    document.getElementById('descInput').value = '';
+    render();
+  }
+
+  function toggleDone(id) {
+    const item = items.find(i => i.id === id);
+    if (item) { item.done = !item.done; save(); render(); }
+  }
+
+  function deleteItem(id) {
+    items = items.filter(i => i.id !== id);
+    save(); render();
+  }
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  function render() {
+    const list = document.getElementById('itemList');
+    let filtered = items;
+    if (currentFilter === 'done') filtered = items.filter(i => i.done);
+    else if (currentFilter !== 'all') filtered = items.filter(i => i.type === currentFilter && !i.done);
+    else filtered = items.filter(i => !i.done).concat(items.filter(i => i.done));
+
+    // stats
+    document.getElementById('countBug').textContent = items.filter(i => i.type === 'bug' && !i.done).length;
+    document.getElementById('countImprove').textContent = items.filter(i => i.type === 'improvement' && !i.done).length;
+    document.getElementById('countDone').textContent = items.filter(i => i.done).length;
+
+    if (!filtered.length) {
+      list.innerHTML = '<div class="empty">// 항목이 없습니다</div>';
+      return;
+    }
+
+    list.innerHTML = filtered.map(item => `
+      <div class="item ${item.type} ${item.done ? 'done' : ''}">
+        <div>
+          <div class="item-title">${escHtml(item.title)}</div>
+          ${item.desc ? `<div class="item-desc">${escHtml(item.desc)}</div>` : ''}
+          <div class="item-meta">
+            <span class="tag ${item.done ? 'done' : item.type}">${item.done ? '✓ 완료' : item.type === 'bug' ? '버그' : '개선'}</span>
+            <span class="tag priority-${item.priority}">${item.priority === 'high' ? '높음' : item.priority === 'mid' ? '보통' : '낮음'}</span>
+            <span class="date">${item.date}</span>
+          </div>
+        </div>
+        <div class="item-actions">
+          <button class="icon-btn check" title="완료 토글" onclick="toggleDone(${item.id})">✓</button>
+          <button class="icon-btn del" title="삭제" onclick="deleteItem(${item.id})">✕</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // enter key
+  document.getElementById('titleInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addItem();
+  });
+
+  render();
+</script>
+</body>
+</html>
